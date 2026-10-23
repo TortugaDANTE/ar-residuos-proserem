@@ -5,8 +5,8 @@
 if(!CanvasRenderingContext2D.prototype.roundRect)CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){r=Math.min(r,w/2,h/2);this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();};
 const T=()=>AFRAME.THREE;const $=s=>document.querySelector(s);
 const NIVELES=[ // velocidad de caída (u/s), intervalo de aparición (s), máximo simultáneo
- {v:.11,int:4.8,max:1},{v:.15,int:3.8,max:1},{v:.2,int:3.0,max:2},{v:.26,int:2.4,max:2},{v:.33,int:1.9,max:3},{v:.42,int:1.45,max:4}];
-const POR_NIVEL=6,VIDAS=3,TIEMPO=120,XB=[-0.56,0,0.56],HB=0.52,Y0=2.06,ZJ=0.25;
+ {v:.0825,int:6.4,max:1},{v:.1125,int:5.07,max:1},{v:.15,int:4.0,max:2},{v:.195,int:3.2,max:2},{v:.2475,int:2.53,max:3},{v:.315,int:1.93,max:4}];
+const POR_NIVEL=6,VIDAS=3,TIEMPO=120,XB=[-0.56,0,0.56],HB=0.52,Y0=2.21,ZJ=0.25;
 const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 function anim(d,fn,done){const t0=performance.now();(function f(){const k=Math.min(1,(performance.now()-t0)/d);fn(k);k<1?requestAnimationFrame(f):done&&done();})();}
 const imgs={};function img(id){if(!imgs[id]){imgs[id]=new Image();imgs[id].src=ICONOS[id];}return imgs[id];}
