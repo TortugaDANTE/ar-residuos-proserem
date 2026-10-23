@@ -19,8 +19,8 @@ AFRAME.registerComponent('fix-raycast-mindar',{tick(){const c=this.el.sceneEl.ca
 <a-scene id="escena" mindar-image="autoStart: false; uiScanning: yes" color-space="sRGB" renderer="colorManagement: true; antialias: true" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
  <a-entity light="type: ambient; intensity: 0.7"></a-entity><a-entity light="type: directional; intensity: 1.1" position="0.6 1.5 1.2"></a-entity>
  <a-camera fix-raycast-mindar position="0 0 0" look-controls="enabled: false"></a-camera>
- <!-- Escala grande (referencia app del agua: scale 2). Cambiar marcador: reemplazar targets/cartel.mind.b64 -->
- <a-entity mindar-image-target="targetIndex: 0"><a-entity id="orient"><a-entity juego position="0 -0.45 0" scale="0.8 0.8 0.8"></a-entity></a-entity></a-entity></a-scene>
+ <!-- Botes ≈1.7× (escala 1.36): cada bote ≈0.7 anchos de marcador, de pie en el borde inferior de la ilustración. Cambiar marcador: reemplazar targets/cartel.mind.b64 -->
+ <a-entity mindar-image-target="targetIndex: 0"><a-entity id="orient"><a-entity juego position="0 -0.67 0" scale="1.36 1.36 1.36"></a-entity></a-entity></a-entity></a-scene>
 <script>
 const sc=document.querySelector('#escena'),tgt=document.querySelector('[mindar-image-target]');
 const dbg=document.createElement('div');dbg.id='dbg';if(new URLSearchParams(location.search).get('debug')!=='0')document.body.appendChild(dbg);

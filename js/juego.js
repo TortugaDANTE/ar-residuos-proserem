@@ -1,6 +1,8 @@
 /* Juego "Separa tus residuos" (PROSEREM · Agenda Ambiental UASLP). Compartido por index.html (RA) y visor.html (sin cámara).
    Unidades locales: 1 = ancho del marcador. Botes 3D (models/*.gltf), residuos = tarjetas planas con icono PROSEREM. */
 (function(){
+/* iOS < 16: CanvasRenderingContext2D.roundRect no existe */
+if(!CanvasRenderingContext2D.prototype.roundRect)CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){r=Math.min(r,w/2,h/2);this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();};
 const T=()=>AFRAME.THREE;const $=s=>document.querySelector(s);
 const NIVELES=[ // velocidad de caída (u/s), intervalo de aparición (s), máximo simultáneo
  {v:.11,int:4.8,max:1},{v:.15,int:3.8,max:1},{v:.2,int:3.0,max:2},{v:.26,int:2.4,max:2},{v:.33,int:1.9,max:3},{v:.42,int:1.45,max:4}];
@@ -11,17 +13,13 @@ const imgs={};function img(id){if(!imgs[id]){imgs[id]=new Image();imgs[id].src=I
 function lienzo(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c;}
 function plano(cv,ancho){const th=T(),t=new th.CanvasTexture(cv);t.colorSpace=th.SRGBColorSpace;t.anisotropy=4;
  return new th.Mesh(new th.PlaneGeometry(ancho,ancho*cv.height/cv.width),new th.MeshBasicMaterial({map:t,transparent:true,depthWrite:false}));}
-// Tarjeta de vidrio con icono (color neutro: no revela la categoría)
-function tarjeta(it){const W=440,H=520,cv=lienzo(W,H),c=cv.getContext('2d');
- c.shadowColor='rgba(0,0,0,.35)';c.shadowBlur=24;c.beginPath();c.roundRect(20,16,W-40,H-44,64);
- const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,'rgba(255,255,255,.97)');g.addColorStop(1,'rgba(225,238,248,.93)');c.fillStyle=g;c.fill();c.shadowBlur=0;
- c.lineWidth=7;c.strokeStyle='rgba(90,224,240,.95)';c.stroke();
- c.save();c.clip();const b=c.createLinearGradient(0,0,W,H*.5);b.addColorStop(0,'rgba(255,255,255,.8)');b.addColorStop(.5,'rgba(255,255,255,0)');c.fillStyle=b;c.fillRect(0,0,W,H*.45);c.restore();
- const i=img(it[0]),dib=()=>{const s=270/Math.max(i.width,i.height);c.drawImage(i,W/2-i.width*s/2,190-i.height*s/2,i.width*s,i.height*s);
-  c.fillStyle='#1a2a3a';c.textAlign='center';let fs=44;c.font=`800 ${fs}px Arial`;while(c.measureText(it[1]).width>W-70&&fs>26){fs-=2;c.font=`800 ${fs}px Arial`;}
-  const pal=it[1].split(' ');if(c.measureText(it[1]).width>W-70){const m=Math.ceil(pal.length/2);c.fillText(pal.slice(0,m).join(' '),W/2,388);c.fillText(pal.slice(m).join(' '),W/2,436);}else c.fillText(it[1],W/2,410);
-  if(mesh.material.map)mesh.material.map.needsUpdate=true;};
- const mesh=plano(cv,0.4);i.complete?dib():i.onload=dib;return mesh;}
+// Residuo plano: icono a color natural (contorno blanco + sombra, sin fondo) y etiqueta con su nombre
+function tarjeta(it){const W=600,H=720,cv=lienzo(W,H),c=cv.getContext('2d');
+ const i=img(it[0]),dib=()=>{c.clearRect(0,0,W,H);const s=Math.min(560/i.width,560/i.height);c.drawImage(i,W/2-i.width*s/2,290-i.height*s/2,i.width*s,i.height*s);
+  c.textAlign='center';let fs=54;c.font=`800 ${fs}px Arial`;while(c.measureText(it[1]).width>W-60&&fs>30){fs-=2;c.font=`800 ${fs}px Arial`;}
+  const tw=Math.min(W-10,c.measureText(it[1]).width+50);c.beginPath();c.roundRect(W/2-tw/2,600,tw,fs+30,(fs+30)/2);c.fillStyle='rgba(14,34,64,.82)';c.fill();c.lineWidth=4;c.strokeStyle='rgba(255,255,255,.9)';c.stroke();
+  c.fillStyle='#fff';c.fillText(it[1],W/2,600+fs+6);if(mesh.material.map)mesh.material.map.needsUpdate=true;};
+ const mesh=plano(cv,0.6);i.complete&&i.naturalWidth?dib():i.addEventListener('load',dib);return mesh;}
 window._tarjeta=tarjeta;
 function radial(col,a){const cv=lienzo(128,128),c=cv.getContext('2d'),g=c.createRadialGradient(64,64,0,64,64,64);g.addColorStop(0,col);g.addColorStop(1,'rgba(0,0,0,0)');c.globalAlpha=a;c.fillStyle=g;c.fillRect(0,0,128,128);
  const t=new (T().CanvasTexture)(cv);t.colorSpace=T().SRGBColorSpace;return t;}
@@ -126,7 +124,7 @@ function resumen(j){const r=$('#resumen');r.classList.remove('oculto');const tot
  <button class="grande" onclick="UI.menu()">Jugar otra vez</button>`;}
 window.UI={nivel:1,
  menu(){$('#resumen').classList.add('oculto');$('#menu').classList.remove('oculto');$('#juegoUI').classList.add('oculto');},
- iniciar(){$('#menu').classList.add('oculto');$('#juegoUI').classList.remove('oculto');JUEGO.nuevo(UI.nivel);},
+ iniciar(){if(!window.JUEGO){setTimeout(UI.iniciar,200);return;}$('#menu').classList.add('oculto');$('#juegoUI').classList.remove('oculto');JUEGO.nuevo(UI.nivel);},
  elegir(n){UI.nivel=n;document.querySelectorAll('#niveles button').forEach((b,i)=>b.classList.toggle('sel',i+1===n));}};
 document.addEventListener('DOMContentLoaded',()=>{
  const bb=$('#botesUI');if(bb)PROSEREM.cats.forEach((c,i)=>{const b=document.createElement('button');b.style.background=c.color;b.innerHTML=`<small>${c.titulo}</small>${c.sub}`;b.onclick=()=>JUEGO.enviar(i);bb.appendChild(b);});
