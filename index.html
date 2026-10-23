@@ -1,0 +1,51 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>RA · Separa tus residuos · Agenda Ambiental UASLP</title><link rel="stylesheet" href="css/estilos.css">
+<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script><script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+<script src="js/iconos.js"></script><script src="js/datos.js"></script><script src="js/paneles.js"></script><script src="js/juego.js"></script></head><body>
+<script>/* MindAR fija camera.projectionMatrix pero no su inversa; el raycaster usa la inversa. */
+AFRAME.registerComponent('fix-raycast-mindar',{tick(){const c=this.el.sceneEl.camera;if(c)c.projectionMatrixInverse.copy(c.projectionMatrix).invert();}});</script>
+<div class="barra"><span class="idlogos"><img src="assets/logos/logo_uaslp_blanco.svg" alt="UASLP"><img src="assets/logos/logo_aa_blanco.svg" alt="Agenda Ambiental UASLP"></span><span>Separa tus residuos</span></div>
+<div id="menu" class="capa"><div class="logos"><span class="idlogos"><img src="assets/logos/logo_uaslp_blanco.svg" alt="UASLP"><img src="assets/logos/logo_aa_blanco.svg" alt="Agenda Ambiental UASLP"></span></div>
+<h1><span>PROSEREM · AGENDA AMBIENTAL UASLP</span>Separa tus residuos</h1>
+<div id="leyenda"></div>
+<p style="margin:4px 0 10px;font-size:15px;max-width:540px">Los residuos caen. <b>Arrástralos</b> o <b>lánzalos</b> hacia el bote correcto, o <b>toca el bote</b>. ¡Más rápido = más puntos! Tienes 3 vidas y 2 minutos.</p>
+<b style="font-size:14px;color:#5AE0F0">ELIGE TU NIVEL INICIAL</b><div id="niveles"></div>
+<button class="grande" id="bIniciar">📷 Iniciar cámara y apuntar al cartel</button><button class="sec" onclick="location.href='visor.html'">Jugar sin cámara</button>
+<p class="nota">Código de colores PROSEREM · Contacto Agenda Ambiental UASLP: ext. 7200 y 7210</p></div>
+<div id="juegoUI" class="oculto"><div id="hud"></div><div id="botesUI"></div></div>
+<div id="aviso" class="aviso-j oculto"></div>
+<div id="resumen" class="capa oculto"><div class="cont"></div></div>
+<button id="bModo" class="oculto">Modo: Auto</button>
+<a-scene id="escena" mindar-image="autoStart: false; uiScanning: yes" color-space="sRGB" renderer="colorManagement: true; antialias: true" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+ <a-entity light="type: ambient; intensity: 0.7"></a-entity><a-entity light="type: directional; intensity: 1.1" position="0.6 1.5 1.2"></a-entity>
+ <a-camera fix-raycast-mindar position="0 0 0" look-controls="enabled: false"></a-camera>
+ <!-- Escala grande (referencia app del agua: scale 2). Cambiar marcador: reemplazar targets/cartel.mind.b64 -->
+ <a-entity mindar-image-target="targetIndex: 0"><a-entity id="orient"><a-entity juego position="0 -0.45 0" scale="0.8 0.8 0.8"></a-entity></a-entity></a-entity></a-scene>
+<script>
+const sc=document.querySelector('#escena'),tgt=document.querySelector('[mindar-image-target]');
+const dbg=document.createElement('div');dbg.id='dbg';if(new URLSearchParams(location.search).get('debug')!=='0')document.body.appendChild(dbg);
+const estado=t=>{dbg.textContent='Estado: '+t;console.log('[AR] '+t);};estado('listo');
+const MODOS=['auto','pared','mesa'];let modo=localStorage.getItem('modoCartelRes')||'auto',beta=null,modoAuto='pared';
+addEventListener('deviceorientation',e=>{if(e.beta!=null)beta=e.beta;});
+function aplicarModo(){const m=modo==='auto'?modoAuto:modo,o=document.querySelector('#orient').object3D;
+ o.rotation.x=m==='mesa'?Math.PI/2:0;o.position.set(0,m==='mesa'?-0.2:0,0);
+ document.querySelector('#bModo').textContent='Modo: '+(modo==='auto'?'Auto ('+(m==='mesa'?'Mesa':'Pared')+')':(m==='mesa'?'Mesa':'Pared'));}
+document.querySelector('#bModo').onclick=()=>{modo=MODOS[(MODOS.indexOf(modo)+1)%3];localStorage.setItem('modoCartelRes',modo);aplicarModo();};
+setTimeout(aplicarModo,0);
+let arranco=false;
+tgt.addEventListener('targetFound',()=>{if(beta!=null)modoAuto=Math.abs(beta)>50?'pared':'mesa';aplicarModo();estado('marcador detectado');
+ if(!arranco){arranco=true;UI.iniciar();}else JUEGO.pausa=false;});
+tgt.addEventListener('targetLost',()=>{estado('marcador perdido · juego en pausa');JUEGO.pausa=true;});
+sc.addEventListener('arReady',()=>estado('cámara OK · apunta al cartel'));
+sc.addEventListener('arError',()=>estado('error: no se pudo iniciar la cámara/RA'));
+document.querySelector('#bIniciar').onclick=async()=>{document.querySelector('#menu').classList.add('oculto');document.querySelector('#bModo').classList.remove('oculto');estado('cargando marcador…');
+ try{if(window.DeviceOrientationEvent&&DeviceOrientationEvent.requestPermission)DeviceOrientationEvent.requestPermission().catch(()=>{});}catch(e){}
+ try{if(!window.isSecureContext)throw new Error('se requiere HTTPS');
+  const t=await (await fetch('targets/cartel.mind.b64',{cache:'no-store'})).text();
+  const bin=Uint8Array.from(atob(t.trim()),c=>c.charCodeAt(0));
+  const url=URL.createObjectURL(new Blob([bin],{type:'application/octet-stream'}));
+  const sys=sc.systems['mindar-image-system'];
+  sys.setup({imageTargetSrc:url,maxTrack:1,filterMinCF:0.0001,filterBeta:0.001,missTolerance:10,warmupTolerance:3,showStats:false,uiLoading:'yes',uiScanning:'yes',uiError:'yes'});
+  estado('pidiendo cámara…');await sys.start();
+ }catch(e){estado('error: '+(e&&e.message||e));}};
+</script></body></html>

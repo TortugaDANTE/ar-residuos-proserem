@@ -1,0 +1,22 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Visor · Separa tus residuos · Agenda Ambiental UASLP</title><link rel="stylesheet" href="css/estilos.css">
+<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+<script src="js/iconos.js"></script><script src="js/datos.js"></script><script src="js/paneles.js"></script><script src="js/juego.js"></script></head><body>
+<style>body{background:radial-gradient(circle at 50% 40%,#123d6b,#0E2240 70%)}</style>
+<div class="barra"><span class="idlogos"><img src="assets/logos/logo_uaslp_blanco.svg" alt="UASLP"><img src="assets/logos/logo_aa_blanco.svg" alt="Agenda Ambiental UASLP"></span><span>Separa tus residuos</span></div>
+<div id="menu" class="capa"><div class="logos"><span class="idlogos"><img src="assets/logos/logo_uaslp_blanco.svg" alt="UASLP"><img src="assets/logos/logo_aa_blanco.svg" alt="Agenda Ambiental UASLP"></span></div>
+<h1><span>PROSEREM · AGENDA AMBIENTAL UASLP</span>Separa tus residuos</h1>
+<div id="leyenda"></div>
+<p style="margin:4px 0 10px;font-size:15px;max-width:540px">Los residuos caen. <b>Arrástralos</b> o <b>lánzalos</b> hacia el bote correcto, o <b>toca el bote</b>. ¡Más rápido = más puntos! Tienes 3 vidas y 2 minutos.</p>
+<b style="font-size:14px;color:#5AE0F0">ELIGE TU NIVEL INICIAL</b><div id="niveles"></div>
+<button class="grande" onclick="UI.iniciar()">▶ Jugar (sin cámara)</button><button class="sec" onclick="location.href='index.html'">Jugar con cámara (RA)</button>
+<p class="nota">Código de colores PROSEREM · Contacto Agenda Ambiental UASLP: ext. 7200 y 7210</p></div>
+<div id="juegoUI" class="oculto"><div id="hud"></div><div id="botesUI"></div></div>
+<div id="aviso" class="aviso-j oculto"></div>
+<div id="resumen" class="capa oculto"><div class="cont"></div></div>
+<a-scene embedded style="position:fixed;inset:0" renderer="colorManagement: true; antialias: true; alpha: true" vr-mode-ui="enabled: false" background="color: #0E2240">
+ <a-entity light="type: ambient; intensity: 0.7"></a-entity><a-entity light="type: directional; intensity: 1.1" position="0.6 1.5 1.2"></a-entity>
+ <a-camera position="0 0.8 2.75" rotation="-4 0 0" look-controls="enabled: false" wasd-controls="enabled: false"></a-camera>
+ <a-plane position="0 0.8 -0.02" width="1.9" height="1.6" material="color:#ffffff;opacity:0.06;transparent:true"></a-plane>
+ <a-entity id="raiz" juego></a-entity></a-scene>
+</body></html>
