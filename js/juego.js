@@ -5,7 +5,7 @@
 if(!CanvasRenderingContext2D.prototype.roundRect)CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){r=Math.min(r,w/2,h/2);this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();};
 const T=()=>AFRAME.THREE;const $=s=>document.querySelector(s);
 const NIVELES=[ // velocidad de caída (u/s), intervalo de aparición (s), máximo simultáneo
- {v:.0825,int:6.4,max:1},{v:.1125,int:5.07,max:1},{v:.15,int:4.0,max:2},{v:.195,int:3.2,max:2},{v:.2475,int:2.53,max:3},{v:.315,int:1.93,max:4}];
+ {v:.11,int:4.8,max:1},{v:.15,int:3.8,max:1},{v:.2,int:3.0,max:2},{v:.26,int:2.4,max:2},{v:.33,int:1.9,max:3},{v:.42,int:1.45,max:4}];
 const POR_NIVEL=6,VIDAS=3,TIEMPO=120,XB=[-0.56,0,0.56],HB=0.52,Y0=2.21,ZJ=0.25;
 const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 function anim(d,fn,done){const t0=performance.now();(function f(){const k=Math.min(1,(performance.now()-t0)/d);fn(k);k<1?requestAnimationFrame(f):done&&done();})();}
@@ -30,7 +30,7 @@ function entorno(r){const th=T(),s=new th.Scene(),pm=new th.PMREMGenerator(r);
  const e=pm.fromScene(s,0.04).texture;pm.dispose();return e;}
 
 AFRAME.registerComponent('juego',{
- init(){const th=T();this.root=this.el.object3D;this.items=[];this.botes=[];this.part=[];this.jugando=false;this.pausa=false;
+ init(){const th=T();this.root=this.el.object3D;this.items=[];this.botes=[];this.part=[];this.jugando=false;this.pausa=false;this.pausaErr=false;
   this.el.sceneEl.addEventListener('renderstart',()=>{this.el.sceneEl.object3D.environment=entorno(this.el.sceneEl.renderer);});
   PROSEREM.cats.forEach((cat,i)=>{const e=document.createElement('a-entity');e.setAttribute('gltf-model',`models/bote_${cat.id}.gltf`);
    e.object3D.position.set(XB[i],0,ZJ);this.el.appendChild(e);const b={cat,e,i,glow:null};this.botes.push(b);
@@ -45,14 +45,14 @@ AFRAME.registerComponent('juego',{
   // suelo/zona de juego sutil
   const ar=new th.Mesh(new th.RingGeometry(0.98,1.0,96),new th.MeshBasicMaterial({color:0x5AE0F0,transparent:true,opacity:.5,depthWrite:false}));ar.rotation.x=-Math.PI/2;ar.scale.set(1,.42,1);ar.position.set(0,0.002,ZJ);this.root.add(ar);
   this.gestos();window.JUEGO=this;},
- nuevo(nivel){this.items.forEach(x=>this.root.remove(x.m));this.items=[];this.nivel=nivel;this.nivel0=nivel;Object.assign(this,{puntos:0,racha:0,mejor:0,vidas:VIDAS,tiempo:TIEMPO,ok:0,mal:0,okNivel:0,errores:[],tSig:0.6,jugando:true});
+ nuevo(nivel){this.items.forEach(x=>this.root.remove(x.m));this.items=[];this.nivel=nivel;this.nivel0=nivel;Object.assign(this,{puntos:0,racha:0,mejor:0,vidas:VIDAS,tiempo:TIEMPO,ok:0,mal:0,okNivel:0,errores:[],tSig:0.6,jugando:true,pausaErr:false});
   this.bolsa=[];hud(this);},
  sacar(){if(!this.bolsa.length)this.bolsa=PROSEREM.items.slice().sort(()=>Math.random()-.5);return this.bolsa.pop();},
  aparecer(){const it=this.sacar(),m=tarjeta(it),x=XB[Math.floor(Math.random()*3)]*0.6+(Math.random()-.5)*0.3;m.position.set(x,Y0,ZJ+0.12);this.root.add(m);
   this.items.push({it,m,x,y:Y0,vivo:true,t:0,tiro:null});},
  activo(){let a=null;this.items.forEach(o=>{if(o.vivo&&!o.tiro&&(!a||o.y<a.y))a=o;});return a;},
  tick(t,dt){if(!dt)return;dt=Math.min(dt,50)/1000;this.part.forEach(p=>p.u(dt));this.part=this.part.filter(p=>p.vivo);
-  if(!this.jugando||this.pausa)return;const N=NIVELES[this.nivel-1];
+  if(!this.jugando||this.pausa||this.pausaErr)return;const N=NIVELES[this.nivel-1];
   this.tiempo-=dt;if(this.tiempo<=0){this.tiempo=0;return this.fin();}
   this.tSig-=dt;if(this.tSig<=0&&this.items.filter(o=>o.vivo).length<N.max){this.aparecer();this.tSig=N.int;}
   const act=this.activo();
@@ -61,7 +61,7 @@ AFRAME.registerComponent('juego',{
    if(o.y<HB+0.12){const i=XB.findIndex(x=>Math.abs(x-o.x)<0.22);if(i>=0)this.resolver(o,i);else if(o.y<0.12)this.suelo(o);}});
   this.botes.forEach(b=>{if(b.glow.material.opacity>0)b.glow.material.opacity=Math.max(0,b.glow.material.opacity-dt*0.9);});
   hud(this);},
- enviar(i){const o=this.activo();if(o)this.resolver(o,i,true);},
+ enviar(i){if(this.pausaErr)return;const o=this.activo();if(o)this.resolver(o,i,true);},
  resolver(o,i,volar){o.tiro=i;const b=this.botes[i],x0=o.x,y0=o.y,frac=Math.max(0,Math.min(1,(y0-HB)/(Y0-HB)));
   this.abrir(b);anim(volar?380:220,k=>{const e=ease(k);o.m.position.set(x0+(XB[i]-x0)*e,y0+(HB+0.05-y0)*e+Math.sin(k*Math.PI)*0.18*(volar?1:0),ZJ+0.12-0.12*e);o.m.scale.setScalar(0.9*(1-0.75*e));},()=>{
    this.root.remove(o.m);o.vivo=false;this.items=this.items.filter(x=>x!==o);if(!this.jugando)return;
@@ -76,7 +76,9 @@ AFRAME.registerComponent('juego',{
   this.error(o,ic,`¡Cayó al suelo! ${o.it[1]} va en ${c.sub.toLowerCase()}`,c.tip);},
  error(o,ic,txt,tip){this.mal++;this.racha=0;this.vidas--;this.errores.push([o.it[1],PROSEREM.cats[ic]]);const b=this.botes[ic];
   b.glow.material.opacity=1.4;this.flecha.visible=true;this.flecha.position.set(XB[ic],HB+0.28,ZJ+0.1);anim(2200,k=>{this.flecha.position.y=HB+0.28+Math.abs(Math.sin(k*12))*0.05;b.glow.material.opacity=Math.max(b.glow.material.opacity,0.8);},()=>this.flecha.visible=false);
-  this.chispas(this.botes[ic],'#ffffff',20);aviso('mal',txt,tip,ic);if(this.vidas<=0)setTimeout(()=>this.fin(),1400);},
+  this.chispas(this.botes[ic],'#ffffff',20);aviso('mal',txt,tip,ic);if(this.vidas<=0)setTimeout(()=>this.fin(),1400);
+  else{/* pausa hasta que el jugador toque */this.pausaErr=true;this.tErr=performance.now();clearTimeout(tAv);const a=$('#aviso');if(a)a.insertAdjacentHTML('beforeend','<small style="display:block;margin-top:6px;opacity:.9">Toca la pantalla para continuar</small>');}},
+ reanudar(){this.pausaErr=false;this.tReanudo=performance.now();const a=$('#aviso');if(a)a.className='aviso-j oculto';},
  abrir(b){if(!b.tapa)return;anim(700,k=>{b.tapa.rotation.x=-1.25*Math.sin(Math.PI*Math.min(1,k*1.3));});},
  sacudir(b){const m=b.mat,c0=m&&m.emissive.clone();anim(500,k=>{b.e.object3D.position.x=XB[b.i]+Math.sin(k*40)*0.02*(1-k);if(m)m.emissive.setRGB(0.6*(1-k),0,0);},()=>{if(m)m.emissive.copy(c0);});},
  chispas(b,col,n){const th=T(),g=new th.BufferGeometry(),P=new Float32Array(n*3),V=[];for(let i=0;i<n;i++){P.set([XB[b.i],HB,ZJ],i*3);V.push([(Math.random()-.5)*0.9,0.6+Math.random()*0.9,(Math.random()-.5)*0.6]);}
@@ -92,6 +94,10 @@ AFRAME.registerComponent('juego',{
   const r=new th.Raycaster();r.far=100000;r.setFromCamera(new th.Vector2(cx/innerWidth*2-1,-cy/innerHeight*2+1),cam);
   const h=r.intersectObjects(this.botes.map(b=>b.zona),false)[0];if(h)this.enviar(h.object.userData.bote);},
  gestos(){const el=this.el.sceneEl.canvas||document.body;let p=null;
+  // pausa por error: cualquier toque (tras 300 ms) cierra el aviso y reanuda; se ignoran botes/botones mientras tanto
+  const bloq=e=>{const now=performance.now();if(this.pausaErr){e.stopPropagation();e.preventDefault();if(e.type==='pointerdown'&&now-this.tErr>300)this.reanudar();return;}
+   if(this.tReanudo&&now-this.tReanudo<500&&e.type!=='pointerdown'){e.stopPropagation();e.preventDefault();}};
+  ['pointerdown','pointerup','click'].forEach(t=>window.addEventListener(t,bloq,true));
   const abajo=e=>{if(!this.jugando||e.target.closest&&e.target.closest('button,.panelj'))return;const o=this.activo();p={x:e.clientX,y:e.clientY,t:performance.now(),o,x0:o&&o.x,k:this.pxPorU(),hist:[[e.clientX,performance.now()]]};};
   const mover=e=>{if(!p||!p.o||!p.o.vivo||p.o.tiro)return;p.hist.push([e.clientX,performance.now()]);if(p.hist.length>6)p.hist.shift();p.o.x=Math.max(-0.85,Math.min(0.85,p.x0+(e.clientX-p.x)/p.k));};
   const arriba=e=>{if(!p)return;const d=Math.hypot(e.clientX-p.x,e.clientY-p.y),h=p.hist,v=h.length>1?(h[h.length-1][0]-h[0][0])/Math.max(1,h[h.length-1][1]-h[0][1]):0;
