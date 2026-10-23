@@ -8,8 +8,8 @@ AFRAME.registerComponent('fix-raycast-mindar',{tick(){const c=this.el.sceneEl.ca
 <div id="menu" class="capa"><div class="logos"><span class="idlogos"><img src="assets/logos/logo_uaslp_blanco.svg" alt="UASLP"><img src="assets/logos/logo_aa_blanco.svg" alt="Agenda Ambiental UASLP"></span></div>
 <h1><span>PROSEREM · AGENDA AMBIENTAL UASLP</span>Separa tus residuos</h1>
 <div id="leyenda"></div>
-<p style="margin:4px 0 10px;font-size:15px;max-width:540px">Los residuos caen. <b>Arrástralos</b> o <b>lánzalos</b> hacia el bote correcto, o <b>toca el bote</b>. ¡Más rápido = más puntos! Tienes 3 vidas y 2 minutos.</p>
-<b style="font-size:14px;color:#5AE0F0">ELIGE TU NIVEL INICIAL</b><div id="niveles"></div>
+<p style="margin:4px 0 10px;font-size:clamp(10.8px,min(3.46vw,1.6vh),13.5px);max-width:540px">Los residuos caen. <b>Arrástralos</b> o <b>lánzalos</b> hacia el bote correcto, o <b>toca el bote</b>. ¡Más rápido = más puntos! Tienes 3 vidas y 2 minutos.</p>
+<b style="font-size:clamp(10.1px,min(3.23vw,1.49vh),12.6px);color:#5AE0F0">ELIGE TU NIVEL INICIAL</b><div id="niveles"></div>
 <button class="grande" id="bIniciar">📷 Iniciar cámara y apuntar al cartel</button><button class="sec" onclick="location.href='visor.html'">Jugar sin cámara</button>
 <p class="nota">Código de colores PROSEREM · Contacto Agenda Ambiental UASLP: ext. 7200 y 7210</p></div>
 <div id="juegoUI" class="oculto"><div id="hud"></div><div id="botesUI"></div></div>
@@ -19,8 +19,8 @@ AFRAME.registerComponent('fix-raycast-mindar',{tick(){const c=this.el.sceneEl.ca
 <a-scene id="escena" mindar-image="autoStart: false; uiScanning: yes" color-space="sRGB" renderer="colorManagement: true; antialias: true" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
  <a-entity light="type: ambient; intensity: 0.7"></a-entity><a-entity light="type: directional; intensity: 1.1" position="0.6 1.5 1.2"></a-entity>
  <a-camera fix-raycast-mindar position="0 0 0" look-controls="enabled: false"></a-camera>
- <!-- Botes ≈1.7× (escala 1.36): cada bote ≈0.7 anchos de marcador, bajados casi al fondo de la pantalla (y −1.0; antes −0.67) para dar más recorrido de caída. Cambiar marcador: reemplazar targets/cartel.mind.b64 -->
- <a-entity mindar-image-target="targetIndex: 0"><a-entity id="orient"><a-entity juego position="0 -1.0 0" scale="1.36 1.36 1.36"></a-entity></a-entity></a-entity></a-scene>
+ <!-- Botes ≈1.7× (escala 1.36): cada bote ≈0.7 anchos de marcador, bajados casi al fondo de la pantalla (y −1.35; antes −0.67 → −1.0) para dar más recorrido de caída. Cambiar marcador: reemplazar targets/cartel.mind.b64 -->
+ <a-entity mindar-image-target="targetIndex: 0"><a-entity id="orient"><a-entity juego position="0 -1.35 0" scale="1.36 1.36 1.36"></a-entity></a-entity></a-entity></a-scene>
 <script>
 const sc=document.querySelector('#escena'),tgt=document.querySelector('[mindar-image-target]');
 const dbg=document.createElement('div');dbg.id='dbg';if(new URLSearchParams(location.search).get('debug')!=='0')document.body.appendChild(dbg);
